@@ -1,28 +1,24 @@
-public class MemoryManager {
+class Memory {
+    public final int TOTAL_MEMORY = 2048;
+    private int availableMemory;
 
-    private final int TOTAL_MEMORY = 2048;
-    private int usedMemory = 0;
-
-    // check available memory
-    public synchronized boolean canAllocate(Process p) {
-        return (usedMemory + p.memory) <= TOTAL_MEMORY;
+    public Memory() {
+        this.availableMemory = TOTAL_MEMORY;
     }
 
-    // allocate memory
-    public synchronized void allocate(Process p) {
-        usedMemory += p.memory;
-        System.out.println("[Memory] Allocated " + p.memory + "MB to Process " + p.id +
-                " | Used: " + usedMemory + "/" + TOTAL_MEMORY + " MB");
+    public synchronized boolean allocate(int size) {
+        if (availableMemory >= size) {
+            availableMemory -= size;
+            return true;
+        }
+        return false;
     }
 
-    // release memory (used by scheduling part)
-    public synchronized void release(Process p) {
-        usedMemory -= p.memory;
-        System.out.println("[Memory] Released " + p.memory + "MB from Process " + p.id +
-                " | Used: " + usedMemory + "/" + TOTAL_MEMORY + " MB");
+    public synchronized void deallocate(int size) {
+        availableMemory += size;
     }
 
-    public synchronized int getAvailableMemory() {
-        return TOTAL_MEMORY - usedMemory;
+    public synchronized int getAvailable() {
+        return availableMemory;
     }
 }
