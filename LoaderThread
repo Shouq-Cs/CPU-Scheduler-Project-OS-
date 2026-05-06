@@ -1,0 +1,63 @@
+import java.util.Queue;
+
+public class LoaderThread extends Thread {
+
+    private final Queue<Process> jobQueue;
+    private final Queue<Process> readyQueue;
+    private final MemoryManager memory;
+
+    // shared flag with scheduler
+    public static volatile boolean allProcessesFinished = false;
+
+    public LoaderThread(Queue<Process> jobQueue,
+                        Queue<Process> readyQueue,
+                        MemoryManager memory) {
+        this.jobQueue = jobQueue;
+        this.readyQueue = readyQueue;
+        this.memory = memory;
+    }
+
+    @Override
+    public void run() {
+
+        while (!allProcessesFinished || !jobQueue.isEmpty()) {
+
+            synchronized (jobQueue) {
+
+                if (!jobQueue.isEmpty()) {
+
+                    Process p = jobQueue.peek();
+
+                    if (p != null && memory.canAllocate(p)) {
+
+                        jobQueue.poll(); // remove from job queue
+                        memory.allocate(p);
+
+                        synchronized (readyQueue) {
+                            readyQueue.add(p);
+                        }
+
+                        System.out.println("[Loader] Process " + p.id + " moved to Ready Queue.");
+
+                    } else {
+                    
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // simulate time unit (1 ms)
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+
+        System.out.println("Loader Thread: All processes admitted and finished. Terminating...");
+    }
+}
