@@ -1,63 +1,75 @@
-import java.util.Queue;
 
-public class LoaderThread extends Thread {
+import java.util.*;
 
-    private final Queue<Process> jobQueue;
-    private final Queue<Process> readyQueue;
-    private final MemoryManager memory;
+public class JobLoaderThread extends Thread {
+    private LinkedList<PCB> jobQueue;
+    private LinkedList<PCB> readyQueue;
+    private SystemCalls systemCalls;
+    private volatile boolean running = true;
 
-    // shared flag with scheduler
-    public static volatile boolean allProcessesFinished = false;
-
-    public LoaderThread(Queue<Process> jobQueue,
-                        Queue<Process> readyQueue,
-                        MemoryManager memory) {
+    public JobLoaderThread(LinkedList<PCB> jobQueue, LinkedList<PCB> readyQueue, SystemCalls systemCalls) {
         this.jobQueue = jobQueue;
         this.readyQueue = readyQueue;
-        this.memory = memory;
+        this.systemCalls = systemCalls;
     }
 
     @Override
     public void run() {
+        System.out.println("[Time 0ms] Job Loader Thread started");
 
-        while (!allProcessesFinished || !jobQueue.isEmpty()) {
-
+        while (running) {
             synchronized (jobQueue) {
-
-                if (!jobQueue.isEmpty()) {
-
-                    Process p = jobQueue.peek();
-
-                    if (p != null && memory.canAllocate(p)) {
-
-                        jobQueue.poll(); // remove from job queue
-                        memory.allocate(p);
-
-                        synchronized (readyQueue) {
-                            readyQueue.add(p);
-                        }
-
-                        System.out.println("[Loader] Process " + p.id + " moved to Ready Queue.");
-
-                    } else {
-                    
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
+                if (jobQueue.isEmpty()) {
+                    waitForJobs();
+                } else {
+                    tryLoadNextJob();
                 }
-            }
-
-            // simulate time unit (1 ms)
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                break;
             }
         }
 
-        System.out.println("Loader Thread: All processes admitted and finished. Terminating...");
+        System.out.println("[Time " + systemCalls.getSystemTime() + "ms] Job Loader Thread terminated");
+    }
+    // helper methods
+    private void waitForJobs() {
+        try {
+            jobQueue.wait(100);
+        } catch (InterruptedException e) {
+            running = false;
+        }
+    }
+
+    private void tryLoadNextJob() {
+        PCB job = jobQueue.peek();
+        if (hasEnoughMemory(job)) {
+            loadJobToReadyQueue(job);
+        } else {
+            waitForMemory();
+        }
+    }
+
+    private boolean hasEnoughMemory(PCB job) {
+        return systemCalls.allocateMemory(job.processId, job.memoryRequired);
+    }
+
+    private void loadJobToReadyQueue(PCB job) {
+        jobQueue.remove();
+        job.state = PCB.ProcessState.READY;
+
+        synchronized (readyQueue) {
+            job.degreeOfMultiprogramming = readyQueue.size();
+            readyQueue.add(job);
+        }
+    }
+
+    private void waitForMemory() {
+        try {
+            jobQueue.wait(100);
+        } catch (InterruptedException e) {
+            running = false;
+        }
+    }
+
+    public void stopLoading() {
+        running = false;
     }
 }
