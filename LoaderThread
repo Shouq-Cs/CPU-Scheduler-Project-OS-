@@ -1,75 +1,25 @@
-
-import java.util.*;
-
-public class JobLoaderThread extends Thread {
-    private LinkedList<PCB> jobQueue;
-    private LinkedList<PCB> readyQueue;
-    private SystemCalls systemCalls;
-    private volatile boolean running = true;
-
-    public JobLoaderThread(LinkedList<PCB> jobQueue, LinkedList<PCB> readyQueue, SystemCalls systemCalls) {
-        this.jobQueue = jobQueue;
-        this.readyQueue = readyQueue;
-        this.systemCalls = systemCalls;
-    }
-
+public class DispatcherThread extends Thread {
     @Override
     public void run() {
-        System.out.println("[Time 0ms] Job Loader Thread started");
+        while (true) {
+            synchronized (SystemManager.lock) {
+                if (!SystemManager.jobQueue.isEmpty()) {
+                    Process nextProcess = SystemManager.jobQueue.peek();
 
-        while (running) {
-            synchronized (jobQueue) {
-                if (jobQueue.isEmpty()) {
-                    waitForJobs();
-                } else {
-                    tryLoadNextJob();
+                    if (SystemManager.currentMemoryUsed + nextProcess.memory <= SystemManager.MAX_MEMORY) {
+                        Process p = SystemManager.jobQueue.poll();
+                        SystemManager.readyQueue.add(p);
+                        SystemManager.currentMemoryUsed += p.memory;
+                        System.out.println("Process " + p.id + " moved to Ready Queue.");
+                    }
                 }
             }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                break;
+            }
         }
-
-        System.out.println("[Time " + systemCalls.getSystemTime() + "ms] Job Loader Thread terminated");
-    }
-    // helper methods
-    private void waitForJobs() {
-        try {
-            jobQueue.wait(100);
-        } catch (InterruptedException e) {
-            running = false;
-        }
-    }
-
-    private void tryLoadNextJob() {
-        PCB job = jobQueue.peek();
-        if (hasEnoughMemory(job)) {
-            loadJobToReadyQueue(job);
-        } else {
-            waitForMemory();
-        }
-    }
-
-    private boolean hasEnoughMemory(PCB job) {
-        return systemCalls.allocateMemory(job.processId, job.memoryRequired);
-    }
-
-    private void loadJobToReadyQueue(PCB job) {
-        jobQueue.remove();
-        job.state = PCB.ProcessState.READY;
-
-        synchronized (readyQueue) {
-            job.degreeOfMultiprogramming = readyQueue.size();
-            readyQueue.add(job);
-        }
-    }
-
-    private void waitForMemory() {
-        try {
-            jobQueue.wait(100);
-        } catch (InterruptedException e) {
-            running = false;
-        }
-    }
-
-    public void stopLoading() {
-        running = false;
     }
 }
