@@ -1,24 +1,11 @@
-class Memory {
-    public final int TOTAL_MEMORY = 2048;
-    private int availableMemory;
 
-    public Memory() {
-        this.availableMemory = TOTAL_MEMORY;
-    }
+import java.util.LinkedList;
+import java.util.Queue;
 
-    public synchronized boolean allocate(int size) {
-        if (availableMemory >= size) {
-            availableMemory -= size;
-            return true;
-        }
-        return false;
-    }
-
-    public synchronized void deallocate(int size) {
-        availableMemory += size;
-    }
-
-    public synchronized int getAvailable() {
-        return availableMemory;
-    }
+public class SystemManager {
+    public static final Queue<Process> jobQueue = new LinkedList<>();
+    public static final Queue<Process> readyQueue = new LinkedList<>();
+    public static int currentMemoryUsed = 0;
+    public static final int MAX_MEMORY = 2048;
+    public static final Object lock = new Object();
 }
