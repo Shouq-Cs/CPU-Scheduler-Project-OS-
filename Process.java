@@ -1,10 +1,10 @@
 public class Process {
 
-    int id;
-    int burstTime;
-    int remainingTime;
-    int priority;
-    int memory;
+    int id;               // Process ID
+    int burstTime;       // CPU burst time
+    int remainingTime;  // Remaining execution time
+    int priority;      // Process priority
+    int memory;       // Memory required
 
     int startTime = -1;
     int finishTime;

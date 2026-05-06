@@ -15,7 +15,7 @@ public class JobReader {
 
             while ((line = br.readLine()) != null) {
 
-                String[] parts = line.split(":");
+                String[] parts = line.split(":"); // Split line data using :
 
                 int id = Integer.parseInt(parts[0]);
                 int burst = Integer.parseInt(parts[1]);
