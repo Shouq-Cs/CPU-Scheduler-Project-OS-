@@ -57,54 +57,71 @@ public class OutputManager {
 
         System.out.println("---------------------------------------------------------------------");
 
-        for (ScheduleResult r : results) {
+        ArrayList<Process> printedProcesses = new ArrayList<>();
 
-            int waiting = r.startTime;
+for (ScheduleResult r : results) {
 
-            int turnaround = r.finishTime;
+    Process p = r.process;
 
-            // Save values inside process object
-            r.process.waitingTime = waiting;
-            r.process.turnaroundTime = turnaround;
+    // Skip if process already printed
+    if (printedProcesses.contains(p)) {
+        continue;
+    }
 
-            System.out.printf("%-10s %-10d %-10d %-10d %-12d %-15d%n",
-                    "P" + r.process.id,
-                    r.process.burstTime,
-                    r.startTime,
-                    r.finishTime,
-                    waiting,
-                    turnaround);
-        }
+    printedProcesses.add(p);
+
+    int waiting = p.finishTime - p.burstTime;
+
+    int turnaround = p.finishTime;
+
+    // Save values
+    p.waitingTime = waiting;
+    p.turnaroundTime = turnaround;
+
+    System.out.printf("%-10s %-10d %-10d %-10d %-12d %-15d%n",
+            "P" + p.id,
+            p.burstTime,
+            p.startTime,
+            p.finishTime,
+            waiting,
+            turnaround);
+}
     }
 
     // =========================
     // Average Calculations
     // =========================
-    public static void printAverageTimes(ArrayList<ScheduleResult> results) {
+   public static void printAverageTimes(ArrayList<ScheduleResult> results) {
 
-        double totalWaiting = 0;
+    ArrayList<Process> calculatedProcesses = new ArrayList<>();
 
-        double totalTurnaround = 0;
+    double totalWaiting = 0;
+    double totalTurnaround = 0;
 
-        for (ScheduleResult r : results) {
+    for (ScheduleResult r : results) {
 
-            totalWaiting += r.process.waitingTime;
+        Process p = r.process;
 
-            totalTurnaround += r.process.turnaroundTime;
+        if (calculatedProcesses.contains(p)) {
+            continue;
         }
 
-        double avgWaiting = totalWaiting / results.size();
+        calculatedProcesses.add(p);
 
-        double avgTurnaround = totalTurnaround / results.size();
-
-        System.out.println("\n=================================");
-        System.out.println("         PERFORMANCE");
-        System.out.println("=================================");
-
-        System.out.printf("Average Waiting Time: %.2f ms%n", avgWaiting);
-
-        System.out.printf("Average Turnaround Time: %.2f ms%n", avgTurnaround);
+        totalWaiting += p.waitingTime;
+        totalTurnaround += p.turnaroundTime;
     }
+
+    double avgWaiting = totalWaiting / calculatedProcesses.size();
+    double avgTurnaround = totalTurnaround / calculatedProcesses.size();
+
+    System.out.println("\n=================================");
+    System.out.println("         PERFORMANCE");
+    System.out.println("=================================");
+
+    System.out.printf("Average Waiting Time: %.2f ms%n", avgWaiting);
+    System.out.printf("Average Turnaround Time: %.2f ms%n", avgTurnaround);
+}
 
     // =========================
     // Starvation
