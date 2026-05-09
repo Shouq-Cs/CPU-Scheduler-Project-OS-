@@ -190,5 +190,61 @@ public class SchedulerLogic {
 
     return results;
 }
+
+public static ArrayList<ScheduleResult> runPriority() {
+
+    int currentTime = 0;
+
+    ArrayList<ScheduleResult> results = new ArrayList<>();
+
+    while (true) {
+
+        Process p = null;
+
+        synchronized (SystemManager.lock) {
+
+            if (SystemManager.jobQueue.isEmpty() && SystemManager.readyQueue.isEmpty()) {
+                break;
+            }
+
+            // Apply aging before selecting the next process
+            applyAging(new ArrayList<>(SystemManager.readyQueue), currentTime);
+
+            p = getNextPriority(new ArrayList<>(SystemManager.readyQueue));
+
+            if (p != null) {
+                SystemManager.readyQueue.remove(p);
+            }
+        }
+
+        if (p != null) {
+
+            p.startTime = currentTime;
+
+            int finish = currentTime + p.burstTime;
+
+            p.finishTime = finish;
+            p.waitingTime = p.startTime;
+            p.turnaroundTime = p.finishTime;
+
+            results.add(new ScheduleResult(p, p.startTime, p.finishTime));
+
+            currentTime = finish;
+
+            synchronized (SystemManager.lock) {
+                SystemManager.currentMemoryUsed -= p.memory;
+            }
+
+        } else {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
+    return results;
+}
 	 }
 	 

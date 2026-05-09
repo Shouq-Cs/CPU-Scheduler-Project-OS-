@@ -70,9 +70,25 @@ try {
         break;
 
 
-    case 3:
-        System.out.println("\nRunning Priority Scheduling...\n");
-        break;
+   case 3:
+    System.out.println("\nRunning Priority Scheduling...\n");
+
+    SystemManager.jobQueue.addAll(processes);
+
+    DispatcherThread dispatcherPriority = new DispatcherThread();
+    dispatcherPriority.start();
+
+    try {
+        Thread.sleep(20);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+
+    results = SchedulerLogic.runPriority();
+
+    dispatcherPriority.interrupt();
+
+    break;
 
     default:
         System.out.println("Invalid choice");
