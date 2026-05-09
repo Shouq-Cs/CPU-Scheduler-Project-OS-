@@ -1,6 +1,6 @@
 
 public class DispatcherThread extends Thread{
-	    @Override
+	     @Override
 	    public void run() {
 	        while (true) {
 	            synchronized (SystemManager.lock) {
@@ -9,6 +9,7 @@ public class DispatcherThread extends Thread{
 
 	                    if (SystemManager.currentMemoryUsed + nextProcess.memory <= SystemManager.MAX_MEMORY) {
 	                        Process p = SystemManager.jobQueue.poll();
+	                        p.timeEnteredReadyQueue=SystemManager.globalTime;
 	                        SystemManager.readyQueue.add(p);
 	                        SystemManager.currentMemoryUsed += p.memory;
 	                        System.out.println("Process " + p.id + " moved to Ready Queue.");
