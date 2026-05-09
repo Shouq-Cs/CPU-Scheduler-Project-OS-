@@ -29,8 +29,24 @@ public class Main {
 switch (choice) {
 
     case 1:
-        System.out.println("\nRunning SJF...\n");
-        break;
+    System.out.println("\nRunning SJF...\n");
+
+    SystemManager.jobQueue.addAll(processes);
+
+    DispatcherThread dispatcherSJF = new DispatcherThread();
+    dispatcherSJF.start();
+
+    try {
+        Thread.sleep(20);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+
+    results = SchedulerLogic.runSJF();
+
+    dispatcherSJF.interrupt();
+
+    break;
 
     case 2:
         System.out.println("\nRunning Round Robin...\n");
