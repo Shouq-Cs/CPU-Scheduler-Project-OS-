@@ -11,6 +11,11 @@ public class Process {
     int waitingTime;
     int turnaroundTime;
 
+
+    int timeEnteredReadyQueue;  // Time when process enters ready queue
+    int lastAgingTime = 0;      // Last time aging was applied
+    boolean isStarved = false;
+    
     public Process(int id, int burstTime, int priority, int memory) {
 
         this.id = id;
